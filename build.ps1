@@ -1,7 +1,7 @@
-# Compiles sm_silenceron.sp into plugins\sm_silenceron.smx using the spcomp that ships
-# with the SourceMod install on the local test server.
+# Compiles sm_silenceron.sp and the test suite (tests\*.sp) into plugins\*.smx using the spcomp
+# that ships with the SourceMod install on the local test server.
 #   .\build.ps1            compile only
-#   .\build.ps1 -Deploy    compile, then copy the .smx to the server
+#   .\build.ps1 -Deploy    compile, then copy the .smx files to the server
 # Shared includes come from the incs submodule (github.com/Ballganda/SourceMod-Incs):
 #   git submodule update --init
 param(
@@ -19,12 +19,16 @@ if (-not (Test-Path (Join-Path $incs 'instance_config.inc'))) {
 $out = Join-Path $PSScriptRoot 'plugins'
 New-Item -ItemType Directory -Force $out | Out-Null
 
-$sp = Join-Path $PSScriptRoot 'sm_silenceron.sp'
-$smx = Join-Path $out 'sm_silenceron.smx'
-& $spcomp $sp "-i$incs" "-i$SourceModDir\scripting\include" "-o$smx"
-if ($LASTEXITCODE -ne 0) { Write-Error 'sm_silenceron failed to compile'; exit 1 }
-
-if ($Deploy) {
-    Copy-Item $smx (Join-Path $SourceModDir 'plugins') -Force
-    Write-Host 'Deployed sm_silenceron.smx'
+$failed = 0
+$targets = @(Get-Item (Join-Path $PSScriptRoot 'sm_silenceron.sp')) +
+           @(Get-ChildItem (Join-Path $PSScriptRoot 'tests') -Filter *.sp -ErrorAction SilentlyContinue)
+foreach ($sp in $targets) {
+    $smx = Join-Path $out ($sp.BaseName + '.smx')
+    & $spcomp $sp.FullName "-i$incs" "-i$SourceModDir\scripting\include" "-o$smx"
+    if ($LASTEXITCODE -ne 0) { $failed++; continue }
+    if ($Deploy) {
+        Copy-Item $smx (Join-Path $SourceModDir 'plugins') -Force
+        Write-Host "Deployed $($sp.BaseName).smx"
+    }
 }
+if ($failed) { Write-Error "$failed plugin(s) failed to compile"; exit 1 }
