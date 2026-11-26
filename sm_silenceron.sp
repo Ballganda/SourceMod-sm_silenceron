@@ -8,7 +8,7 @@
 #define NAME "[CS:S]sm_silenceron"
 #define AUTHOR "BallGanda, and help from Addie + rest of discord channel"
 #define DESCRIPTION "Weapons that have silencers come with them on"
-#define PLUGIN_VERSION "0.0.b1"
+#define PLUGIN_VERSION "0.1.0"
 #define URL "https://github.com/Ballganda/SourceMod-sm_silenceron"
 
 public Plugin myinfo = {
